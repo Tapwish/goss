@@ -99,7 +99,6 @@
             overflow: hidden;
         }
 
-        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 320px;
             background: var(--dark-card);
@@ -278,7 +277,6 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* ===== MAIN CHAT ===== */
         .main-chat {
             flex: 1;
             display: flex;
@@ -401,7 +399,7 @@
             transition: all 0.3s ease;
         }
 
-        .input-area button:hover {
+        .input-area button:hover:not(:disabled) {
             background: var(--neon-red);
             color: var(--text-primary);
         }
@@ -436,7 +434,6 @@
             display: none;
         }
 
-        /* ===== АДАПТИВ ===== */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -828,6 +825,8 @@
             document.getElementById('userAvatar').src = currentUser.avatar;
             document.getElementById('newChatBtn').disabled = false;
             document.getElementById('userStats').style.display = 'block';
+            document.getElementById('questionInput').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
             updateStats();
         }
 
