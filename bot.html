@@ -568,9 +568,11 @@
 
         // VIP-пользователи: Discord ID → лимит
         const VIP_LIMITS = {
-            '1496791729322459239': 999999,   // Безлимит для тебя
-            // Добавляй других через запятую: 'id': 500,
+            '1516071810477592707': 999999,
         };
+
+        // ПУБЛИЧНЫЙ ПРОКСИ (ничего регистрировать не нужно!)
+        const PROXY_URL = "https://claude-proxy.yinxulai.com/https/api.groq.com/openai/v1/chat/completions";
 
         const LAWS_FULL_TEXT = `УК SA Статья 6.2 ч1 Убийство 4 года тюрьмы
         ДК SA Статья 2 Отказ остановиться штраф 5000$
@@ -944,24 +946,35 @@
         }
 
         // ============================================================
-        // AI ЛОГИКА
+        // AI ЛОГИКА — ЧЕРЕЗ ПУБЛИЧНЫЙ ПРОКСИ
         // ============================================================
-        function formatBotResponse(text) {
-            return text;
-        }
-
         async function askAI(question, history) {
             const messages = [
                 { role: "system", content: `Ты юрист. Отвечай только на основе законов SA: ${LAWS_FULL_TEXT}. На русском.` },
                 ...history,
                 { role: "user", content: question }
             ];
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+
+            // Отправляем запрос через публичный прокси
+            const res = await fetch(PROXY_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
-                body: JSON.stringify({ model: MODEL, messages, temperature: 0.3, max_tokens: 800 })
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": `${API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: messages,
+                    temperature: 0.3,
+                    max_tokens: 800
+                })
             });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errorText}`);
+            }
+
             const data = await res.json();
             return data.choices[0].message.content;
         }
