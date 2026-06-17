@@ -565,11 +565,13 @@
         const API_KEY = "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";
         const MODEL = "llama-3.3-70b-versatile";
         const DAILY_LIMIT = 100;
+
+        // VIP-пользователи: Discord ID → лимит
         const VIP_LIMITS = {
-    '1496791729322459239': 1000,   // Твой Discord ID → 1000 сообщений
-    '987654321098765432': 500,    // Админ → 500 сообщений
-    '555555555555555555': 999999  // Безлимит
-};
+            '1516071810477592707': 999999,   // Безлимит для тебя
+            // Добавляй других через запятую: 'id': 500,
+        };
+
         const LAWS_FULL_TEXT = `УК SA Статья 6.2 ч1 Убийство 4 года тюрьмы
         ДК SA Статья 2 Отказ остановиться штраф 5000$
         АдмКодекс SA Статья 11.1 Оскорбление штраф 5000-20000$
@@ -583,6 +585,17 @@
         let currentConversation = null;
         let conversations = [];
         let waiting = false;
+
+        // ============================================================
+        // ЛИМИТЫ
+        // ============================================================
+        async function getUserLimit() {
+            if (!currentUser) return DAILY_LIMIT;
+            if (VIP_LIMITS[currentUser.id]) {
+                return VIP_LIMITS[currentUser.id];
+            }
+            return DAILY_LIMIT;
+        }
 
         // ============================================================
         // ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ
@@ -848,9 +861,10 @@
         async function updateStats() {
             if (!currentUser) return;
             const daily = await getTodayUserMessagesCount();
-            document.getElementById('statsText').innerHTML = `📨 ${daily}/${DAILY_LIMIT} сегодня`;
-            if (daily >= DAILY_LIMIT) {
-                document.getElementById('limitWarning').innerHTML = '⚠️ Дневной лимит 100 сообщений исчерпан';
+            const limit = await getUserLimit();
+            document.getElementById('statsText').innerHTML = `📨 ${daily}/${limit} сегодня`;
+            if (daily >= limit) {
+                document.getElementById('limitWarning').innerHTML = '⚠️ Дневной лимит исчерпан';
                 document.getElementById('questionInput').disabled = true;
                 document.getElementById('sendBtn').disabled = true;
             } else {
@@ -918,8 +932,9 @@
         async function createNewConversation() {
             if (!currentUser) return;
             const daily = await getTodayUserMessagesCount();
-            if (daily >= DAILY_LIMIT) {
-                document.getElementById('limitWarning').innerHTML = '⚠️ Лимит 100 сообщений на сегодня';
+            const limit = await getUserLimit();
+            if (daily >= limit) {
+                document.getElementById('limitWarning').innerHTML = '⚠️ Лимит сообщений на сегодня исчерпан';
                 return;
             }
             const newConv = await saveConversation({});
@@ -954,8 +969,9 @@
         async function sendMessage() {
             if (!currentUser || !currentConversation || waiting) return;
             const daily = await getTodayUserMessagesCount();
-            if (daily >= DAILY_LIMIT) {
-                document.getElementById('limitWarning').innerHTML = '⚠️ Лимит 100 сообщений на сегодня';
+            const limit = await getUserLimit();
+            if (daily >= limit) {
+                document.getElementById('limitWarning').innerHTML = '⚠️ Лимит сообщений на сегодня исчерпан';
                 return;
             }
             const input = document.getElementById('questionInput');
