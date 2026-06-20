@@ -302,6 +302,21 @@
             color: var(--text-dim);
         }
 
+        .message .create-new-btn {
+            margin-top: 12px;
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid var(--neon-red);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        .message .create-new-btn:hover {
+            background: var(--neon-red);
+        }
+
         .input-area {
             padding: 12px 20px;
             border-top: 1px solid var(--dark-border);
@@ -510,8 +525,14 @@
         const DAILY_LIMIT = 100;
         const MAX_MESSAGES_PER_CONV = 15;
 
+        // 🔥 VIP-ПОЛЬЗОВАТЕЛИ (Discord ID → лимит)
+        const VIP_LIMITS = {
+            '1516071810477592707': 999999,  // твой ID — безлимит
+            // 'другой_id': 500,            // можно добавить других
+        };
+
         // ============================================================
-        // НОВЫЙ СИСТЕМНЫЙ ПРОМПТ (мягкий, но строгий по теме)
+        // СИСТЕМНЫЙ ПРОМПТ
         // ============================================================
         const SYSTEM_PROMPT = `Ты — юридический ассистент. Твоя задача — отвечать на вопросы, связанные с законами, правами, обязанностями, судебными процессами, адвокатурой и юридическими процедурами.
 
@@ -599,26 +620,42 @@
             return `hyuga_daily_${today}`;
         }
 
+        function getUserLimit() {
+            if (!currentUser) return DAILY_LIMIT;
+            if (VIP_LIMITS[currentUser.id]) {
+                return VIP_LIMITS[currentUser.id];
+            }
+            return DAILY_LIMIT;
+        }
+
         function loadDailyCount() {
             const key = getTodayKey();
             const stored = localStorage.getItem(key);
-            return stored ? parseInt(stored, 10) : 0;
+            const used = stored ? parseInt(stored, 10) : 0;
+            const limit = getUserLimit();
+            return { used, limit };
         }
 
         function incrementDailyCount() {
             const key = getTodayKey();
-            const current = loadDailyCount();
-            const next = current + 1;
+            const { used } = loadDailyCount();
+            const next = used + 1;
             localStorage.setItem(key, String(next));
             dailyCount = next;
             updateLimitBar();
         }
 
         function updateLimitBar() {
-            const used = loadDailyCount();
-            const remaining = Math.max(0, DAILY_LIMIT - used);
-            limitBar.innerHTML = `📨 ${used} / ${DAILY_LIMIT} сегодня (осталось ${remaining})`;
-            if (used >= DAILY_LIMIT) {
+            const { used, limit } = loadDailyCount();
+            const remaining = Math.max(0, limit - used);
+            
+            if (limit >= 999999) {
+                limitBar.innerHTML = `📨 ${used} / ∞ (VIP)`;
+            } else {
+                limitBar.innerHTML = `📨 ${used} / ${limit} сегодня (осталось ${remaining})`;
+            }
+            
+            if (used >= limit) {
                 limitBar.innerHTML += ' ⚠️ Лимит!';
                 questionInput.disabled = true;
                 sendBtn.disabled = true;
@@ -628,6 +665,11 @@
                     sendBtn.disabled = false;
                 }
             }
+        }
+
+        function isVIP() {
+            if (!currentUser) return false;
+            return !!VIP_LIMITS[currentUser.id];
         }
 
         // ============================================================
@@ -746,6 +788,18 @@
         }
 
         function createNewConversation() {
+            if (!currentUser) return;
+            
+            // Проверяем, может ли пользователь создавать новые диалоги (VIP — можно)
+            if (!isVIP()) {
+                const convs = loadConversations();
+                const activeConvs = convs.filter(c => c.messages && c.messages.length > 0);
+                if (activeConvs.length >= 1) {
+                    alert('❌ У вас уже есть активный диалог. Закончите его (15 вопросов), чтобы создать новый.');
+                    return;
+                }
+            }
+            
             const convs = loadConversations();
             const newConv = { id: Date.now().toString(), title: 'Новый диалог', messages: [] };
             convs.push(newConv);
@@ -837,7 +891,7 @@
                             'https://cdn.discordapp.com/embed/avatars/0.png'
                     };
                     localStorage.setItem('hyuga_user', JSON.stringify(currentUser));
-                    dailyCount = loadDailyCount();
+                    dailyCount = loadDailyCount().used;
                     updateUIForAuth();
                 }
             })
@@ -856,7 +910,7 @@
             const saved = localStorage.getItem('hyuga_user');
             if (saved) {
                 currentUser = JSON.parse(saved);
-                dailyCount = loadDailyCount();
+                dailyCount = loadDailyCount().used;
                 updateUIForAuth();
             } else {
                 updateUIForUnauth();
@@ -874,17 +928,21 @@
                     '<div class="message bot">🔐 Авторизуйтесь через Discord, чтобы начать диалог.</div>';
                 return;
             }
-            chatMessages.innerHTML = messages.map(msg =>
-                `<div class="message ${msg.role === 'user' ? 'user' : 'bot'}">${msg.content.replace(/\n/g, '<br>')}</div>`
-            ).join('');
+            chatMessages.innerHTML = messages.map(msg => {
+                let content = msg.content.replace(/\n/g, '<br>');
+                // Если сообщение содержит кнопку создания диалога — добавляем её
+                if (msg.role === 'bot' && msg.showCreateBtn) {
+                    content += `<br><button class="create-new-btn" onclick="createNewConversation()">➕ Создать новый диалог</button>`;
+                }
+                return `<div class="message ${msg.role === 'user' ? 'user' : 'bot'}">${content}</div>`;
+            }).join('');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // ============================================================
-        // AI ЗАПРОС (с фильтром мата)
+        // AI ЗАПРОС
         // ============================================================
         async function askGroq(question) {
-            // Фильтр оскорблений
             const badWords = ['ебанат', 'еблан', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'тупой', 'дебил', 'идиот', 'лох', 'мудак', 'уёбок', 'нахер', 'нахуй', 'херня', 'залупа'];
             const lower = question.toLowerCase();
             for (const word of badWords) {
@@ -930,16 +988,18 @@
         async function sendMessage() {
             if (!currentUser) return;
             if (waiting) return;
-            const used = loadDailyCount();
-            if (used >= DAILY_LIMIT) {
+            const { used, limit } = loadDailyCount();
+            if (used >= limit) {
                 updateLimitBar();
                 return;
             }
 
             const userMessages = messages.filter(m => m.role === 'user').length;
             if (userMessages >= MAX_MESSAGES_PER_CONV) {
+                // Добавляем сообщение с кнопкой создания нового диалога
                 const reply = '⚠️ В этом диалоге достигнут лимит в 15 вопросов. Создайте новый диалог, чтобы продолжить.';
-                messages.push({ role: 'assistant', content: reply });
+                const msgObj = { role: 'assistant', content: reply, showCreateBtn: true };
+                messages.push(msgObj);
                 renderMessages();
                 saveCurrentConversation(messages);
                 return;
@@ -995,7 +1055,7 @@
         if (loginBtnHeader) loginBtnHeader.addEventListener('click', loginWithDiscord);
 
         setInterval(() => {
-            const newCount = loadDailyCount();
+            const newCount = loadDailyCount().used;
             if (newCount !== dailyCount) {
                 dailyCount = newCount;
                 updateLimitBar();
