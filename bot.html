@@ -460,7 +460,6 @@
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2>📂 Диалоги</h2>
@@ -472,8 +471,8 @@
             <span id="sideUserName">User</span>
             <button class="logout-small" id="sideLogoutBtn">Выйти</button>
         </div>
-        <div id="sideUnauth" style="padding:12px 18px; color:var(--text-dim); font-size:0.8rem; border-bottom:1px solid var(--dark-border);">
-            🔐 Войдите через Discord
+        <div id="sideUnauth" style="padding:12px 18px; border-bottom:1px solid var(--dark-border);">
+            <button class="btn btn-login" id="sideLoginBtn" style="width:100%; background:transparent; border:1px solid var(--neon-red); color:var(--text-primary); padding:10px; border-radius:4px; cursor:pointer; font-family: 'Inter', sans-serif; font-size:0.9rem; font-weight:600;">Войти через Discord</button>
         </div>
 
         <div class="conv-list-sidebar" id="convListSide"></div>
@@ -492,8 +491,9 @@
             <div class="user-badge" id="headerUserInfo" style="display:none;">
                 <img id="headerAvatar" src="" alt="">
                 <span id="headerUserName"></span>
+                <button class="btn btn-logout" id="headerLogoutBtn" style="border-color:var(--text-dim); margin-left:10px;">Выйти</button>
             </div>
-            <button class="btn btn-logout" id="headerLogoutBtn" style="display:none;">Выйти</button>
+            <button class="btn btn-login" id="headerLoginBtn" style="background:transparent; border:1px solid var(--neon-red); color:var(--text-primary); padding:8px 16px; border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.9rem; font-weight:600;">Войти через Discord</button>
         </div>
 
         <div class="chat-messages" id="chatMessages">
@@ -509,9 +509,13 @@
     </div>
 
     <script>
-        // ============================================================
-        // НАСТРОЙКИ
-        // ============================================================
+        window.onbeforeunload = null;
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+        window.onbeforeunload = function() {};
+
         const DISCORD_CLIENT_ID = '1516071810477592707';
         const GROQ_API_KEY = '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';
         const GROQ_URL = 'https://goss.ghostikks.workers.dev/v1/chat/completions';
@@ -519,14 +523,10 @@
         const DAILY_LIMIT = 100;
         const MAX_MESSAGES_PER_CONV = 15;
 
-        // VIP-ПОЛЬЗОВАТЕЛИ (Discord ID → лимит)
         const VIP_LIMITS = {
             '1516071810477592707': 999999,
         };
 
-        // ============================================================
-        // ЖЁСТКИЙ СИСТЕМНЫЙ ПРОМПТ (ТОЛЬКО ЮРИДИЧЕСКИЕ ВОПРОСЫ)
-        // ============================================================
         const SYSTEM_PROMPT = `Ты — юридический ассистент. Ты ОТВЕЧАЕШЬ ТОЛЬКО на вопросы, связанные с законами, правами, обязанностями, судебными процессами, адвокатурой и юридическими процедурами.
 
         Ты НЕ должен отвечать на:
@@ -547,9 +547,6 @@
 
         Отвечай на русском языке, чётко, по делу. НЕ используй мат и оскорбления в ответах.`;
 
-        // ============================================================
-        // СОСТОЯНИЕ
-        // ============================================================
         let currentUser = null;
         let messages = [];
         let waiting = false;
@@ -557,9 +554,6 @@
         let currentConversationId = null;
         let isSidebarOpen = false;
 
-        // ============================================================
-        // DOM
-        // ============================================================
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         const menuToggle = document.getElementById('menuToggle');
@@ -572,20 +566,19 @@
         const sideAvatar = document.getElementById('sideAvatar');
         const sideUserName = document.getElementById('sideUserName');
         const sideLogoutBtn = document.getElementById('sideLogoutBtn');
+        const sideLoginBtn = document.getElementById('sideLoginBtn');
 
         const headerUserInfo = document.getElementById('headerUserInfo');
         const headerAvatar = document.getElementById('headerAvatar');
         const headerUserName = document.getElementById('headerUserName');
         const headerLogoutBtn = document.getElementById('headerLogoutBtn');
+        const headerLoginBtn = document.getElementById('headerLoginBtn');
 
         const chatMessages = document.getElementById('chatMessages');
         const questionInput = document.getElementById('questionInput');
         const sendBtn = document.getElementById('sendBtn');
         const limitBar = document.getElementById('limitBar');
 
-        // ============================================================
-        // SIDEBAR TOGGLE
-        // ============================================================
         function toggleSidebar(open) {
             isSidebarOpen = open !== undefined ? open : !isSidebarOpen;
             if (window.innerWidth <= 768) {
@@ -608,14 +601,6 @@
             }
         });
 
-        // ============================================================
-        // УБИРАЕМ ПРЕДУПРЕЖДЕНИЕ beforeunload (чтобы не вылезало при удалении)
-        // ============================================================
-        window.onbeforeunload = null;
-
-        // ============================================================
-        // ЛИМИТЫ
-        // ============================================================
         function getTodayKey() {
             const today = new Date().toISOString().split('T')[0];
             return `hyuga_daily_${today}`;
@@ -673,9 +658,6 @@
             return !!VIP_LIMITS[currentUser.id];
         }
 
-        // ============================================================
-        // РАБОТА С ДИАЛОГАМИ (localStorage)
-        // ============================================================
         function getConversationsKey() {
             return `hyuga_conv_${currentUser ? currentUser.id : 'guest'}`;
         }
@@ -812,9 +794,6 @@
             if (window.innerWidth <= 768) toggleSidebar(false);
         }
 
-        // ============================================================
-        // DISCORD AUTH
-        // ============================================================
         function loginWithDiscord() {
             const redirectUri = window.location.href.split('#')[0];
             const url =
@@ -841,6 +820,7 @@
             sideNewChatBtn.disabled = false;
 
             headerUserInfo.style.display = 'flex';
+            headerLoginBtn.style.display = 'none';
             headerLogoutBtn.style.display = 'block';
             headerAvatar.src = currentUser.avatar;
             headerUserName.textContent = currentUser.username;
@@ -866,8 +846,11 @@
             sideUserInfo.style.display = 'none';
             sideUnauth.style.display = 'block';
             sideNewChatBtn.disabled = true;
+
             headerUserInfo.style.display = 'none';
+            headerLoginBtn.style.display = 'block';
             headerLogoutBtn.style.display = 'none';
+
             questionInput.disabled = true;
             sendBtn.disabled = true;
             messages = [];
@@ -918,9 +901,6 @@
             }
         }
 
-        // ============================================================
-        // ОТОБРАЖЕНИЕ СООБЩЕНИЙ
-        // ============================================================
         function renderMessages() {
             if (messages.length === 0) {
                 chatMessages.innerHTML = currentUser ?
@@ -938,13 +918,8 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // ============================================================
-        // ЮРИДИЧЕСКИЙ ФИЛЬТР (проверяем, что вопрос связан с законами)
-        // ============================================================
         function isLegalQuestion(question) {
             const lower = question.toLowerCase();
-            
-            // Ключевые слова, указывающие на юридическую тему
             const legalKeywords = [
                 'закон', 'право', 'адвокат', 'суд', 'судья', 'прокурор',
                 'задержание', 'арест', 'тюрьма', 'штраф', 'наказание',
@@ -955,22 +930,15 @@
                 'иск', 'жалоба', 'апелляция', 'приговор', 'оправдание',
                 'гражданский', 'уголовный', 'административный', 'налоговый'
             ];
-            
-            // Проверяем, есть ли хотя бы одно юридическое слово
             for (const word of legalKeywords) {
                 if (lower.includes(word)) {
                     return true;
                 }
             }
-            
             return false;
         }
 
-        // ============================================================
-        // AI ЗАПРОС
-        // ============================================================
         async function askGroq(question) {
-            // Сначала проверяем, относится ли вопрос к юриспруденции
             if (!isLegalQuestion(question)) {
                 return 'Извините, я помогаю только с юридическими вопросами. Пожалуйста, спросите о законах, правах или адвокатуре.';
             }
@@ -1006,9 +974,6 @@
             return data.choices[0].message.content;
         }
 
-        // ============================================================
-        // ОТПРАВКА СООБЩЕНИЯ
-        // ============================================================
         async function sendMessage() {
             if (!currentUser) return;
             if (waiting) return;
@@ -1063,19 +1028,15 @@
             }
         }
 
-        // ============================================================
-        // ЗАПУСК
-        // ============================================================
         sideLogoutBtn.addEventListener('click', logout);
         headerLogoutBtn.addEventListener('click', logout);
+        sideLoginBtn.addEventListener('click', loginWithDiscord);
+        headerLoginBtn.addEventListener('click', loginWithDiscord);
         sideNewChatBtn.addEventListener('click', createNewConversation);
         sendBtn.addEventListener('click', sendMessage);
         questionInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) loginBtn.addEventListener('click', loginWithDiscord);
 
         setInterval(() => {
             const newCount = loadDailyCount().used;
@@ -1094,16 +1055,6 @@
             isSidebarOpen = false;
             sidebar.classList.add('open');
         }
-
-        // ============================================================
-        // ОТКЛЮЧАЕМ beforeunload (убираем предупреждение навсегда)
-        // ============================================================
-        window.onbeforeunload = null;
-        window.addEventListener('beforeunload', (e) => {
-            e.preventDefault();
-            e.returnValue = '';
-        });
-        window.onbeforeunload = function() {};
     </script>
 </body>
 </html>
