@@ -52,15 +52,13 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            transition: transform 0.3s ease, width 0.3s ease;
+            transition: transform 0.3s ease;
             overflow: hidden;
             z-index: 10;
         }
 
         .sidebar.closed {
             transform: translateX(-100%);
-            width: 0;
-            border: none;
         }
 
         .sidebar-header {
@@ -402,7 +400,6 @@
             }
             .sidebar.closed {
                 transform: translateX(-100%);
-                width: 280px;
             }
             .overlay.show {
                 display: block;
@@ -513,23 +510,25 @@
         const DAILY_LIMIT = 100;
         const MAX_MESSAGES_PER_CONV = 15;
 
-        const SYSTEM_PROMPT = `Ты — строгий юридический ассистент. Твоя задача — отвечать ТОЛЬКО на вопросы, связанные с законами, правами, обязанностями, судебными процессами, адвокатурой и юридическими процедурами.
+        // ============================================================
+        // НОВЫЙ СИСТЕМНЫЙ ПРОМПТ (мягкий, но строгий по теме)
+        // ============================================================
+        const SYSTEM_PROMPT = `Ты — юридический ассистент. Твоя задача — отвечать на вопросы, связанные с законами, правами, обязанностями, судебными процессами, адвокатурой и юридическими процедурами.
 
-        Ты НЕ должен отвечать на:
-        - Оскорбления, мат, личные выпады
-        - Вопросы, не связанные с законами или юриспруденцией
-        - Пустые или бессмысленные вопросы
+        Ты НЕ должен отвечать на оскорбления, мат или личные выпады (типа "ты ебанат", "идиот", "лох"). На такие вопросы отвечай вежливо: "Извините, я помогаю только с юридическими вопросами. Пожалуйста, спросите о законах, правах или адвокатуре."
 
-        Если пользователь задаёт оскорбительный, нецензурный или не по теме вопрос — вежливо ответь: "Извините, я помогаю только с юридическими вопросами. Пожалуйста, спросите о законах, правах или адвокатуре."
+        На вопросы по теме (например, "кто такой адвокат", "что делает адвокат", "какие законы", "какое наказание за убийство") — отвечай подробно, используя свои знания и законы SA, перечисленные ниже.
 
-        Законы:
-        УК SA Статья 6.2 ч1 Убийство — 4 года тюрьмы
-        ДК SA Статья 2 Отказ остановиться — штраф 5000$
-        АдмКодекс SA Статья 11.1 Оскорбление — штраф 5000-20000$
-        ПК SA Статья 16 Основания задержания: следы, видео, ордер
-        Конституция SA Статья 1.5 Презумпция невиновности
+        Законы SA:
+        • УК SA Статья 6.2 ч1 Убийство — 4 года тюрьмы
+        • ДК SA Статья 2 Отказ остановиться — штраф 5000$
+        • АдмКодекс SA Статья 11.1 Оскорбление — штраф 5000-20000$
+        • ПК SA Статья 16 Основания задержания: следы, видео, ордер
+        • Конституция SA Статья 1.5 Презумпция невиновности
 
-        Отвечай кратко, чётко, по делу, только на русском языке.`;
+        Также ты знаешь общие юридические понятия: адвокат, прокурор, суд, права человека, задержание, судебный процесс. На вопросы по этим темам отвечай развёрнуто, но кратко.
+
+        Отвечай на русском языке, чётко, по делу.`;
 
         // ============================================================
         // СОСТОЯНИЕ
@@ -781,21 +780,20 @@
         }
 
         function updateUIForAuth() {
-            // Sidebar
             sideUserInfo.style.display = 'flex';
             sideUnauth.style.display = 'none';
             sideAvatar.src = currentUser.avatar;
             sideUserName.textContent = currentUser.username;
             sideNewChatBtn.disabled = false;
-            // Header
+
             headerUserInfo.style.display = 'flex';
             headerLogoutBtn.style.display = 'block';
             headerAvatar.src = currentUser.avatar;
             headerUserName.textContent = currentUser.username;
-            // Input
+
             questionInput.disabled = false;
             sendBtn.disabled = false;
-            // Load conversations
+
             const convs = loadConversations();
             if (convs.length > 0) {
                 const last = convs[convs.length - 1];
@@ -883,9 +881,10 @@
         }
 
         // ============================================================
-        // AI ЗАПРОС
+        // AI ЗАПРОС (с фильтром мата)
         // ============================================================
         async function askGroq(question) {
+            // Фильтр оскорблений
             const badWords = ['ебанат', 'еблан', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'тупой', 'дебил', 'идиот', 'лох', 'мудак', 'уёбок', 'нахер', 'нахуй', 'херня', 'залупа'];
             const lower = question.toLowerCase();
             for (const word of badWords) {
@@ -903,8 +902,8 @@
                     ...history,
                     { role: 'user', content: question }
                 ],
-                temperature: 0.3,
-                max_tokens: 800
+                temperature: 0.5,
+                max_tokens: 1000
             };
 
             const response = await fetch(GROQ_URL, {
@@ -984,8 +983,6 @@
         // ============================================================
         // ЗАПУСК
         // ============================================================
-        // Кнопки
-        document.getElementById('loginBtn')?.addEventListener('click', loginWithDiscord);
         sideLogoutBtn.addEventListener('click', logout);
         headerLogoutBtn.addEventListener('click', logout);
         sideNewChatBtn.addEventListener('click', createNewConversation);
@@ -994,8 +991,7 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Сторонние кнопки (если есть в header)
-        const loginBtnHeader = document.querySelector('#authButtons .btn');
+        const loginBtnHeader = document.querySelector('#headerRight .btn');
         if (loginBtnHeader) loginBtnHeader.addEventListener('click', loginWithDiscord);
 
         setInterval(() => {
@@ -1008,7 +1004,6 @@
 
         checkAuth();
 
-        // Инициализация сайдбара (закрыт на десктопе, открыт на мобиле?)
         if (window.innerWidth > 768) {
             isSidebarOpen = false;
             sidebar.classList.add('closed');
