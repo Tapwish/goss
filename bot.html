@@ -533,7 +533,7 @@
 
         Правила:
         - Отвечай только на русском языке.
-        - Если вопрос не связан с юриспруденцией США — вежливо откажись, сказав: "Извините, я специализируюсь только на законодательстве США. Пожалуйста, спросите о законах, правах или юридических процедурах."
+        - Если вопрос не связан с юриспруденцией США — вежливо откажись, сказав: "Извините, я специализируюсь только на законодательстве США. Пожалуйста, спросите о законах, правах или юридических процедурах США."
         - Будь вежлив, профессионален и точен.
         - Если вопрос содержит оскорбления или нецензурную лексику — игнорируй и предложи задать корректный вопрос.
 
@@ -547,6 +547,89 @@
         let dailyCount = 0;
         let currentConversationId = null;
         let isSidebarOpen = false;
+        
+        // Хранилище лимитов пользователей
+        let userLimits = {};
+        const STORAGE_KEY = 'hyuga_user_limits';
+
+        function loadUserLimits() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    userLimits = JSON.parse(stored);
+                } catch (e) {
+                    userLimits = {};
+                }
+            } else {
+                userLimits = {};
+            }
+        }
+
+        function saveUserLimits() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(userLimits));
+        }
+
+        function getTodayKey() {
+            const today = new Date().toISOString().split('T')[0];
+            return today;
+        }
+
+        function getUserLimit() {
+            if (!currentUser) return DAILY_LIMIT;
+            if (VIP_LIMITS[currentUser.id]) {
+                return VIP_LIMITS[currentUser.id];
+            }
+            return DAILY_LIMIT;
+        }
+
+        function loadDailyCount() {
+            if (!currentUser) return { used: 0, limit: DAILY_LIMIT };
+            const today = getTodayKey();
+            const userId = currentUser.id;
+            const key = `${userId}_${today}`;
+            const used = userLimits[key] || 0;
+            const limit = getUserLimit();
+            return { used, limit };
+        }
+
+        function incrementDailyCount() {
+            if (!currentUser) return;
+            const today = getTodayKey();
+            const userId = currentUser.id;
+            const key = `${userId}_${today}`;
+            const current = userLimits[key] || 0;
+            userLimits[key] = current + 1;
+            saveUserLimits();
+            dailyCount = userLimits[key];
+            updateLimitBar();
+        }
+
+        function updateLimitBar() {
+            const { used, limit } = loadDailyCount();
+            const remaining = Math.max(0, limit - used);
+            
+            if (limit >= 999999) {
+                limitBar.innerHTML = `📨 ${used} / ∞ (VIP)`;
+            } else {
+                limitBar.innerHTML = `📨 ${used} / ${limit} сегодня (осталось ${remaining})`;
+            }
+            
+            if (used >= limit) {
+                limitBar.innerHTML += ' ⚠️ Лимит!';
+                questionInput.disabled = true;
+                sendBtn.disabled = true;
+            } else {
+                if (currentUser) {
+                    questionInput.disabled = false;
+                    sendBtn.disabled = false;
+                }
+            }
+        }
+
+        function isVIP() {
+            if (!currentUser) return false;
+            return !!VIP_LIMITS[currentUser.id];
+        }
 
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
@@ -594,63 +677,6 @@
                 sidebar.classList.toggle('closed', !isSidebarOpen);
             }
         });
-
-        function getTodayKey() {
-            const today = new Date().toISOString().split('T')[0];
-            return `hyuga_daily_${today}`;
-        }
-
-        function getUserLimit() {
-            if (!currentUser) return DAILY_LIMIT;
-            if (VIP_LIMITS[currentUser.id]) {
-                return VIP_LIMITS[currentUser.id];
-            }
-            return DAILY_LIMIT;
-        }
-
-        function loadDailyCount() {
-            const key = getTodayKey();
-            const stored = localStorage.getItem(key);
-            const used = stored ? parseInt(stored, 10) : 0;
-            const limit = getUserLimit();
-            return { used, limit };
-        }
-
-        function incrementDailyCount() {
-            const key = getTodayKey();
-            const { used } = loadDailyCount();
-            const next = used + 1;
-            localStorage.setItem(key, String(next));
-            dailyCount = next;
-            updateLimitBar();
-        }
-
-        function updateLimitBar() {
-            const { used, limit } = loadDailyCount();
-            const remaining = Math.max(0, limit - used);
-            
-            if (limit >= 999999) {
-                limitBar.innerHTML = `📨 ${used} / ∞ (VIP)`;
-            } else {
-                limitBar.innerHTML = `📨 ${used} / ${limit} сегодня (осталось ${remaining})`;
-            }
-            
-            if (used >= limit) {
-                limitBar.innerHTML += ' ⚠️ Лимит!';
-                questionInput.disabled = true;
-                sendBtn.disabled = true;
-            } else {
-                if (currentUser) {
-                    questionInput.disabled = false;
-                    sendBtn.disabled = false;
-                }
-            }
-        }
-
-        function isVIP() {
-            if (!currentUser) return false;
-            return !!VIP_LIMITS[currentUser.id];
-        }
 
         function getConversationsKey() {
             return `hyuga_conv_${currentUser ? currentUser.id : 'guest'}`;
@@ -867,7 +893,7 @@
                             'https://cdn.discordapp.com/embed/avatars/0.png'
                     };
                     localStorage.setItem('hyuga_user', JSON.stringify(currentUser));
-                    dailyCount = loadDailyCount().used;
+                    loadUserLimits();
                     updateUIForAuth();
                 }
             })
@@ -886,7 +912,7 @@
             const saved = localStorage.getItem('hyuga_user');
             if (saved) {
                 currentUser = JSON.parse(saved);
-                dailyCount = loadDailyCount().used;
+                loadUserLimits();
                 updateUIForAuth();
             } else {
                 updateUIForUnauth();
@@ -1035,13 +1061,16 @@
         });
 
         setInterval(() => {
-            const newCount = loadDailyCount().used;
-            if (newCount !== dailyCount) {
-                dailyCount = newCount;
-                updateLimitBar();
+            if (currentUser) {
+                const { used } = loadDailyCount();
+                if (used !== dailyCount) {
+                    dailyCount = used;
+                    updateLimitBar();
+                }
             }
         }, 60000);
 
+        loadUserLimits();
         checkAuth();
 
         if (window.innerWidth > 768) {
