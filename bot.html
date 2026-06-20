@@ -298,12 +298,15 @@
         // НАСТРОЙКИ
         // ============================================================
         const DISCORD_CLIENT_ID = '1516071810477592707';
-        const GROQ_API_KEY = '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';
+
+        // 🔑 ВСТАВЬ СВОЙ API-КЛЮЧ СЮДА
+        const GROQ_API_KEY = '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';
+
+        // 🌐 ВСТАВЬ СВОЙ URL С DENO DEPLOY
+        const PROXY_URL = 'https://ТВОЙ-ПРОЕКТ.deno.dev/v1/chat/completions';
+
         const MODEL = 'llama-3.3-70b-versatile';
         const DAILY_LIMIT = 100;
-
-        // ПРОКСИ (бесплатный, публичный)
-        const PROXY_URL = 'https://claude-proxy.yinxulai.com/https/api.groq.com/openai/v1/chat/completions';
 
         // Законы SA (системный промпт)
         const LAWS = `УК SA Статья 6.2 ч1 Убийство 4 года тюрьмы
@@ -492,7 +495,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': GROQ_API_KEY
+                    'Authorization': `Bearer ${GROQ_API_KEY}`
                 },
                 body: JSON.stringify(payload)
             });
