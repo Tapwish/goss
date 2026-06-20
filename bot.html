@@ -200,23 +200,6 @@
             color: var(--neon-red);
         }
 
-        .auth-prompt {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            gap: 20px;
-            color: var(--text-dim);
-            text-align: center;
-            padding: 20px;
-        }
-
-        .auth-prompt .btn {
-            font-size: 0.8rem;
-            padding: 12px 32px;
-        }
-
         @media (max-width: 600px) {
             .header {
                 padding: 10px 12px;
@@ -299,11 +282,11 @@
         // ============================================================
         const DISCORD_CLIENT_ID = '1516071810477592707';
 
-        // 🔑 ВСТАВЬ СВОЙ API-КЛЮЧ СЮДА
+        // 🔑 НОВЫЙ API-КЛЮЧ (ОБНОВЛЁННЫЙ)
         const GROQ_API_KEY = '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';
 
-        // 🌐 ВСТАВЬ СВОЙ URL С DENO DEPLOY
-        const PROXY_URL = 'https://ТВОЙ-ПРОЕКТ.deno.dev/v1/chat/completions';
+        // ⚡ ПРЯМОЙ URL GROQ API (БЕЗ ПРОКСИ)
+        const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
         const MODEL = 'llama-3.3-70b-versatile';
         const DAILY_LIMIT = 100;
@@ -319,7 +302,7 @@
         // СОСТОЯНИЕ
         // ============================================================
         let currentUser = null;
-        let messages = []; // [{role, content}]
+        let messages = [];
         let waiting = false;
         let dailyCount = 0;
 
@@ -475,7 +458,7 @@
         }
 
         // ============================================================
-        // AI ЗАПРОС (через прокси)
+        // AI ЗАПРОС (ПРЯМОЙ)
         // ============================================================
         async function askGroq(question) {
             const history = messages.map(m => ({ role: m.role, content: m.content }));
@@ -491,7 +474,7 @@
                 max_tokens: 800
             };
 
-            const response = await fetch(PROXY_URL, {
+            const response = await fetch(GROQ_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -527,15 +510,12 @@
             questionInput.disabled = true;
             sendBtn.disabled = true;
 
-            // Добавляем вопрос пользователя
             messages.push({ role: 'user', content: question });
             renderMessages();
             incrementDailyCount();
             updateLimitBar();
 
             waiting = true;
-
-            // Добавляем "печатает..."
             const thinkingIndex = messages.length;
             messages.push({ role: 'assistant', content: '🤔 Думаю...' });
             renderMessages();
@@ -566,7 +546,6 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Сброс лимита при смене дня
         setInterval(() => {
             const newCount = loadDailyCount();
             if (newCount !== dailyCount) {
