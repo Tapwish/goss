@@ -727,7 +727,6 @@
         }
 
         function deleteConversation(id) {
-            // Убираем лишние предупреждения
             if (!confirm('Удалить этот диалог?')) return;
             let convs = loadConversations();
             convs = convs.filter(c => c.id !== id);
@@ -1075,8 +1074,8 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        const loginBtnHeader = document.querySelector('#headerRight .btn');
-        if (loginBtnHeader) loginBtnHeader.addEventListener('click', loginWithDiscord);
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) loginBtn.addEventListener('click', loginWithDiscord);
 
         setInterval(() => {
             const newCount = loadDailyCount().used;
@@ -1104,7 +1103,6 @@
             e.preventDefault();
             e.returnValue = '';
         });
-        // Полностью отключаем
         window.onbeforeunload = function() {};
     </script>
 </body>
