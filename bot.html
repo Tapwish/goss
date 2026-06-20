@@ -282,11 +282,11 @@
         // ============================================================
         const DISCORD_CLIENT_ID = '1516071810477592707';
 
-        // 🔑 НОВЫЙ API-КЛЮЧ (ОБНОВЛЁННЫЙ)
+        // 🔑 API-КЛЮЧ
         const GROQ_API_KEY = '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';
 
-        // ⚡ ПРЯМОЙ URL GROQ API (БЕЗ ПРОКСИ)
-        const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+        // ✅ ПРОКСИ (РАБОЧИЙ!)
+        const GROQ_URL = 'https://goss.ghostikks.workers.dev/v1/chat/completions';
 
         const MODEL = 'llama-3.3-70b-versatile';
         const DAILY_LIMIT = 100;
@@ -458,7 +458,7 @@
         }
 
         // ============================================================
-        // AI ЗАПРОС (ПРЯМОЙ)
+        // AI ЗАПРОС (ЧЕРЕЗ ПРОКСИ)
         // ============================================================
         async function askGroq(question) {
             const history = messages.map(m => ({ role: m.role, content: m.content }));
