@@ -709,7 +709,6 @@
         }
 
         function deleteConversation(id) {
-            if (!confirm('Удалить этот диалог?')) return;
             let convs = loadConversations();
             convs = convs.filter(c => c.id !== id);
             saveConversations(convs);
