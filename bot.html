@@ -21,6 +21,7 @@
             --dark-border: #1a1a1a;
             --text-primary: #ffffff;
             --text-dim: #888888;
+            --sidebar-width: 280px;
         }
 
         body {
@@ -29,7 +30,6 @@
             font-family: 'Inter', 'Arial', sans-serif;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             height: 100vh;
             overflow: hidden;
             position: relative;
@@ -44,81 +44,231 @@
             border-radius: 2px;
         }
 
-        .header {
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: var(--sidebar-width);
             background: var(--dark-card);
+            border-right: 1px solid var(--dark-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: transform 0.3s ease, width 0.3s ease;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+            width: 0;
+            border: none;
+        }
+
+        .sidebar-header {
+            padding: 16px 18px;
             border-bottom: 1px solid var(--dark-border);
-            padding: 12px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-shrink: 0;
-            flex-wrap: wrap;
-            gap: 10px;
         }
 
-        .header h1 {
+        .sidebar-header h2 {
             font-family: 'Orbitron', monospace;
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--neon-red);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
             font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             color: var(--text-dim);
         }
 
-        .user-badge img {
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: color 0.3s;
+        }
+        .sidebar-close:hover {
+            color: var(--neon-red);
+        }
+
+        .sidebar-user {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-user img {
             width: 32px;
             height: 32px;
             border-radius: 50%;
             border: 1px solid var(--neon-red);
         }
 
-        .btn {
+        .sidebar-user span {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-user .logout-small {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: color 0.3s;
+        }
+        .sidebar-user .logout-small:hover {
+            color: var(--neon-red);
+        }
+
+        .conv-list-sidebar {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+        }
+
+        .conv-item-side {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .conv-item-side:hover {
+            background: rgba(204, 0, 51, 0.05);
+            border-color: var(--dark-border);
+        }
+
+        .conv-item-side.active {
+            border-color: var(--neon-red);
+            background: rgba(204, 0, 51, 0.08);
+            color: var(--text-primary);
+        }
+
+        .conv-item-side .conv-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+
+        .conv-item-side .conv-del {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .conv-item-side .conv-del:hover {
+            color: var(--neon-red);
+            background: rgba(204, 0, 51, 0.1);
+        }
+
+        .sidebar-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--dark-border);
+            flex-shrink: 0;
+        }
+
+        .btn-side-new {
+            width: 100%;
             background: transparent;
             border: 1px solid var(--neon-red);
             color: var(--text-primary);
-            padding: 8px 16px;
-            border-radius: 2px;
+            padding: 10px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Orbitron', monospace;
             font-size: 0.6rem;
-            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: all 0.3s ease;
-            min-height: 40px;
+            transition: all 0.3s;
         }
-
-        .btn:hover:not(:disabled) {
+        .btn-side-new:hover:not(:disabled) {
             background: var(--neon-red);
-            color: var(--text-primary);
         }
-
-        .btn:disabled {
+        .btn-side-new:disabled {
             opacity: 0.3;
             cursor: not-allowed;
         }
 
-        .btn-logout {
-            border-color: var(--text-dim);
+        /* ========== MAIN ========== */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--dark-bg);
+            min-width: 0;
         }
 
-        .btn-logout:hover {
+        .chat-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--dark-border);
+            background: var(--dark-card);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .menu-toggle {
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .menu-toggle:hover {
             border-color: var(--neon-red);
-            background: var(--neon-red);
+        }
+
+        .chat-header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--neon-red);
+            flex: 1;
+        }
+
+        .chat-header .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .chat-header .user-badge img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--neon-red);
         }
 
         .chat-messages {
@@ -133,7 +283,7 @@
         .message {
             max-width: 85%;
             padding: 12px 16px;
-            border-radius: 2px;
+            border-radius: 4px;
             font-size: 0.9rem;
             line-height: 1.5;
             white-space: pre-wrap;
@@ -167,7 +317,7 @@
             flex: 1;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--dark-border);
-            border-radius: 2px;
+            border-radius: 4px;
             padding: 12px 16px;
             color: var(--text-primary);
             font-size: 0.9rem;
@@ -180,14 +330,36 @@
         .input-area input:focus {
             border-color: var(--neon-red);
         }
-
         .input-area input:disabled {
             opacity: 0.3;
         }
 
+        .input-area button {
+            background: transparent;
+            border: 1px solid var(--neon-red);
+            border-radius: 4px;
+            padding: 0 24px;
+            color: var(--text-primary);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+        .input-area button:hover:not(:disabled) {
+            background: var(--neon-red);
+        }
+        .input-area button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         .limit-bar {
             background: rgba(204, 0, 51, 0.05);
-            padding: 6px 16px;
+            padding: 6px 20px;
             font-size: 11px;
             text-align: center;
             border-top: 1px solid var(--dark-border);
@@ -195,108 +367,169 @@
             flex-shrink: 0;
             font-family: 'Inter', sans-serif;
         }
-
         .limit-bar strong {
             color: var(--neon-red);
         }
 
-        @media (max-width: 600px) {
-            .header {
-                padding: 10px 12px;
+        /* ========== OVERLAY ========== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 5;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 280px;
+                z-index: 20;
+                transform: translateX(-100%);
             }
-            .header h1 {
-                font-size: 0.9rem;
+            .sidebar.open {
+                transform: translateX(0);
             }
-            .chat-messages {
-                padding: 12px;
+            .sidebar.closed {
+                transform: translateX(-100%);
+                width: 280px;
             }
-            .input-area {
-                padding: 10px 12px;
+            .overlay.show {
+                display: block;
+            }
+            .chat-header h1 {
+                font-size: 1rem;
             }
             .message {
                 max-width: 92%;
                 font-size: 0.85rem;
                 padding: 10px 14px;
             }
-            .btn {
-                font-size: 0.5rem;
-                padding: 6px 12px;
-                min-height: 36px;
+            .input-area {
+                padding: 10px 12px;
             }
-            .user-badge {
-                font-size: 0.7rem;
+            .input-area input {
+                font-size: 0.85rem;
+                padding: 10px 12px;
+                min-height: 44px;
+            }
+            .input-area button {
+                font-size: 0.6rem;
+                padding: 0 16px;
+                min-height: 44px;
             }
         }
 
-        @media (max-width: 400px) {
-            .header h1 {
-                font-size: 0.7rem;
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 240px;
             }
-            .btn {
-                font-size: 0.45rem;
-                padding: 4px 10px;
-                min-height: 32px;
+            .chat-header {
+                padding: 10px 12px;
+            }
+            .chat-messages {
+                padding: 12px;
+            }
+            .conv-item-side .conv-title {
+                max-width: 120px;
             }
             .message {
                 font-size: 0.8rem;
                 padding: 8px 12px;
-            }
-            .input-area input {
-                font-size: 0.8rem;
-                padding: 8px 12px;
-                min-height: 40px;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>⚡ MAJESTIC · AI</h1>
-        <div class="header-right" id="headerRight">
-            <div id="authButtons">
-                <button class="btn" id="loginBtn">Войти через Discord</button>
-            </div>
-            <div id="userInfo" style="display:none;" class="user-badge">
-                <img id="userAvatar" src="" alt="">
-                <span id="userName"></span>
-                <button class="btn btn-logout" id="logoutBtn">Выйти</button>
-            </div>
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>📂 Диалоги</h2>
+            <button class="sidebar-close" id="sidebarCloseBtn">✕</button>
+        </div>
+
+        <div class="sidebar-user" id="sideUserInfo" style="display:none;">
+            <img id="sideAvatar" src="" alt="">
+            <span id="sideUserName">User</span>
+            <button class="logout-small" id="sideLogoutBtn">Выйти</button>
+        </div>
+        <div id="sideUnauth" style="padding:12px 18px; color:var(--text-dim); font-size:0.8rem; border-bottom:1px solid var(--dark-border);">
+            🔐 Войдите через Discord
+        </div>
+
+        <div class="conv-list-sidebar" id="convListSide"></div>
+
+        <div class="sidebar-footer">
+            <button class="btn-side-new" id="sideNewChatBtn" disabled>+ Новый диалог</button>
         </div>
     </div>
 
-    <div class="chat-messages" id="chatMessages">
-        <div class="message bot">🔐 Авторизуйтесь через Discord, чтобы начать диалог.</div>
-    </div>
+    <!-- ===== OVERLAY ===== -->
+    <div class="overlay" id="overlay"></div>
 
-    <div class="input-area">
-        <input type="text" id="questionInput" placeholder="Ваш вопрос..." disabled>
-        <button class="btn" id="sendBtn" disabled>Отправить</button>
-    </div>
+    <!-- ===== MAIN ===== -->
+    <div class="main-chat">
+        <div class="chat-header">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1>⚡ MAJESTIC · AI</h1>
+            <div class="user-badge" id="headerUserInfo" style="display:none;">
+                <img id="headerAvatar" src="" alt="">
+                <span id="headerUserName"></span>
+            </div>
+            <button class="btn btn-logout" id="headerLogoutBtn" style="display:none;">Выйти</button>
+        </div>
 
-    <div class="limit-bar" id="limitBar">📨 0 / 100 сегодня</div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">🔐 Авторизуйтесь через Discord, чтобы начать диалог.</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="questionInput" placeholder="Ваш вопрос..." disabled>
+            <button id="sendBtn" disabled>Отправить</button>
+        </div>
+
+        <div class="limit-bar" id="limitBar">📨 0 / 100 сегодня</div>
+    </div>
 
     <script>
         // ============================================================
         // НАСТРОЙКИ
         // ============================================================
         const DISCORD_CLIENT_ID = '1516071810477592707';
-
-        // 🔑 API-КЛЮЧ
         const GROQ_API_KEY = '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';
-
-        // ✅ ПРОКСИ (РАБОЧИЙ!)
         const GROQ_URL = 'https://goss.ghostikks.workers.dev/v1/chat/completions';
-
         const MODEL = 'llama-3.3-70b-versatile';
         const DAILY_LIMIT = 100;
+        const MAX_MESSAGES_PER_CONV = 15;
 
-        // Законы SA (системный промпт)
-        const LAWS = `УК SA Статья 6.2 ч1 Убийство 4 года тюрьмы
-        ДК SA Статья 2 Отказ остановиться штраф 5000$
-        АдмКодекс SA Статья 11.1 Оскорбление штраф 5000-20000$
+        const SYSTEM_PROMPT = `Ты — строгий юридический ассистент. Твоя задача — отвечать ТОЛЬКО на вопросы, связанные с законами, правами, обязанностями, судебными процессами, адвокатурой и юридическими процедурами.
+
+        Ты НЕ должен отвечать на:
+        - Оскорбления, мат, личные выпады
+        - Вопросы, не связанные с законами или юриспруденцией
+        - Пустые или бессмысленные вопросы
+
+        Если пользователь задаёт оскорбительный, нецензурный или не по теме вопрос — вежливо ответь: "Извините, я помогаю только с юридическими вопросами. Пожалуйста, спросите о законах, правах или адвокатуре."
+
+        Законы:
+        УК SA Статья 6.2 ч1 Убийство — 4 года тюрьмы
+        ДК SA Статья 2 Отказ остановиться — штраф 5000$
+        АдмКодекс SA Статья 11.1 Оскорбление — штраф 5000-20000$
         ПК SA Статья 16 Основания задержания: следы, видео, ордер
-        Конституция SA Статья 1.5 Презумпция невиновности`;
+        Конституция SA Статья 1.5 Презумпция невиновности
+
+        Отвечай кратко, чётко, по делу, только на русском языке.`;
 
         // ============================================================
         // СОСТОЯНИЕ
@@ -305,20 +538,59 @@
         let messages = [];
         let waiting = false;
         let dailyCount = 0;
+        let currentConversationId = null;
+        let isSidebarOpen = false;
 
         // ============================================================
         // DOM
         // ============================================================
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+
+        const convListSide = document.getElementById('convListSide');
+        const sideNewChatBtn = document.getElementById('sideNewChatBtn');
+        const sideUserInfo = document.getElementById('sideUserInfo');
+        const sideUnauth = document.getElementById('sideUnauth');
+        const sideAvatar = document.getElementById('sideAvatar');
+        const sideUserName = document.getElementById('sideUserName');
+        const sideLogoutBtn = document.getElementById('sideLogoutBtn');
+
+        const headerUserInfo = document.getElementById('headerUserInfo');
+        const headerAvatar = document.getElementById('headerAvatar');
+        const headerUserName = document.getElementById('headerUserName');
+        const headerLogoutBtn = document.getElementById('headerLogoutBtn');
+
         const chatMessages = document.getElementById('chatMessages');
         const questionInput = document.getElementById('questionInput');
         const sendBtn = document.getElementById('sendBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const authButtons = document.getElementById('authButtons');
-        const userInfo = document.getElementById('userInfo');
-        const userName = document.getElementById('userName');
-        const userAvatar = document.getElementById('userAvatar');
         const limitBar = document.getElementById('limitBar');
+
+        // ============================================================
+        // SIDEBAR TOGGLE
+        // ============================================================
+        function toggleSidebar(open) {
+            isSidebarOpen = open !== undefined ? open : !isSidebarOpen;
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open', isSidebarOpen);
+                overlay.classList.toggle('show', isSidebarOpen);
+            } else {
+                sidebar.classList.toggle('closed', !isSidebarOpen);
+            }
+        }
+
+        menuToggle.addEventListener('click', () => toggleSidebar());
+        sidebarCloseBtn.addEventListener('click', () => toggleSidebar(false));
+        overlay.addEventListener('click', () => toggleSidebar(false));
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                overlay.classList.remove('show');
+                sidebar.classList.remove('open');
+                sidebar.classList.toggle('closed', !isSidebarOpen);
+            }
+        });
 
         // ============================================================
         // ЛИМИТЫ
@@ -348,7 +620,7 @@
             const remaining = Math.max(0, DAILY_LIMIT - used);
             limitBar.innerHTML = `📨 ${used} / ${DAILY_LIMIT} сегодня (осталось ${remaining})`;
             if (used >= DAILY_LIMIT) {
-                limitBar.innerHTML += ' ⚠️ Лимит исчерпан!';
+                limitBar.innerHTML += ' ⚠️ Лимит!';
                 questionInput.disabled = true;
                 sendBtn.disabled = true;
             } else {
@@ -357,6 +629,134 @@
                     sendBtn.disabled = false;
                 }
             }
+        }
+
+        // ============================================================
+        // РАБОТА С ДИАЛОГАМИ (localStorage)
+        // ============================================================
+        function getConversationsKey() {
+            return `hyuga_conv_${currentUser ? currentUser.id : 'guest'}`;
+        }
+
+        function loadConversations() {
+            if (!currentUser) return [];
+            try {
+                const data = localStorage.getItem(getConversationsKey());
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        }
+
+        function saveConversations(convs) {
+            if (!currentUser) return;
+            localStorage.setItem(getConversationsKey(), JSON.stringify(convs));
+        }
+
+        function getCurrentConversation() {
+            const convs = loadConversations();
+            if (convs.length === 0) {
+                const newConv = { id: Date.now().toString(), title: 'Новый диалог', messages: [] };
+                convs.push(newConv);
+                saveConversations(convs);
+                return newConv;
+            }
+            if (currentConversationId) {
+                const found = convs.find(c => c.id === currentConversationId);
+                if (found) return found;
+            }
+            return convs[convs.length - 1];
+        }
+
+        function saveCurrentConversation(messagesList) {
+            const convs = loadConversations();
+            const conv = getCurrentConversation();
+            conv.messages = messagesList;
+            if (messagesList.length > 0 && messagesList[0].role === 'user' && conv.title === 'Новый диалог') {
+                const title = messagesList[0].content.substring(0, 30);
+                conv.title = title + (messagesList[0].content.length > 30 ? '...' : '');
+            }
+            const index = convs.findIndex(c => c.id === conv.id);
+            if (index !== -1) {
+                convs[index] = conv;
+            } else {
+                convs.push(conv);
+            }
+            saveConversations(convs);
+            renderConvList();
+        }
+
+        function deleteConversation(id) {
+            if (!confirm('Удалить этот диалог?')) return;
+            let convs = loadConversations();
+            convs = convs.filter(c => c.id !== id);
+            saveConversations(convs);
+            if (currentConversationId === id) {
+                if (convs.length > 0) {
+                    currentConversationId = convs[convs.length - 1].id;
+                    const conv = convs[convs.length - 1];
+                    messages = conv.messages || [];
+                } else {
+                    currentConversationId = null;
+                    messages = [];
+                }
+                renderMessages();
+            }
+            renderConvList();
+            updateLimitBar();
+        }
+
+        function renderConvList() {
+            const convs = loadConversations();
+            convListSide.innerHTML = '';
+            if (convs.length === 0) {
+                convListSide.innerHTML = '<div style="padding:16px 12px; color:var(--text-dim); font-size:0.8rem; text-align:center;">Нет диалогов<br>Создайте новый</div>';
+                return;
+            }
+            convs.forEach(c => {
+                const isActive = c.id === currentConversationId;
+                const div = document.createElement('div');
+                div.className = `conv-item-side ${isActive ? 'active' : ''}`;
+                div.innerHTML = `
+                    <span class="conv-title">${c.title}</span>
+                    <button class="conv-del" data-id="${c.id}">✕</button>
+                `;
+                div.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        switchConversation(c.id);
+                    }
+                });
+                const delBtn = div.querySelector('.conv-del');
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteConversation(c.id);
+                });
+                convListSide.appendChild(div);
+            });
+        }
+
+        function switchConversation(id) {
+            const convs = loadConversations();
+            const found = convs.find(c => c.id === id);
+            if (found) {
+                currentConversationId = id;
+                messages = found.messages || [];
+                renderMessages();
+                renderConvList();
+                updateLimitBar();
+                if (window.innerWidth <= 768) toggleSidebar(false);
+            }
+        }
+
+        function createNewConversation() {
+            const convs = loadConversations();
+            const newConv = { id: Date.now().toString(), title: 'Новый диалог', messages: [] };
+            convs.push(newConv);
+            saveConversations(convs);
+            currentConversationId = newConv.id;
+            messages = [];
+            renderMessages();
+            renderConvList();
+            updateLimitBar();
+            if (window.innerWidth <= 768) toggleSidebar(false);
         }
 
         // ============================================================
@@ -373,25 +773,56 @@
             currentUser = null;
             localStorage.removeItem('hyuga_user');
             messages = [];
+            currentConversationId = null;
             renderMessages();
             updateUIForUnauth();
             updateLimitBar();
+            renderConvList();
         }
 
         function updateUIForAuth() {
-            authButtons.style.display = 'none';
-            userInfo.style.display = 'flex';
-            userName.textContent = currentUser.username;
-            userAvatar.src = currentUser.avatar;
+            // Sidebar
+            sideUserInfo.style.display = 'flex';
+            sideUnauth.style.display = 'none';
+            sideAvatar.src = currentUser.avatar;
+            sideUserName.textContent = currentUser.username;
+            sideNewChatBtn.disabled = false;
+            // Header
+            headerUserInfo.style.display = 'flex';
+            headerLogoutBtn.style.display = 'block';
+            headerAvatar.src = currentUser.avatar;
+            headerUserName.textContent = currentUser.username;
+            // Input
             questionInput.disabled = false;
             sendBtn.disabled = false;
+            // Load conversations
+            const convs = loadConversations();
+            if (convs.length > 0) {
+                const last = convs[convs.length - 1];
+                currentConversationId = last.id;
+                messages = last.messages || [];
+                renderMessages();
+            } else {
+                messages = [];
+                renderMessages();
+            }
+            renderConvList();
+            updateLimitBar();
         }
 
         function updateUIForUnauth() {
-            authButtons.style.display = 'flex';
-            userInfo.style.display = 'none';
+            sideUserInfo.style.display = 'none';
+            sideUnauth.style.display = 'block';
+            sideNewChatBtn.disabled = true;
+            headerUserInfo.style.display = 'none';
+            headerLogoutBtn.style.display = 'none';
             questionInput.disabled = true;
             sendBtn.disabled = true;
+            messages = [];
+            currentConversationId = null;
+            renderMessages();
+            renderConvList();
+            updateLimitBar();
         }
 
         function fetchDiscordUser(token) {
@@ -410,9 +841,6 @@
                     localStorage.setItem('hyuga_user', JSON.stringify(currentUser));
                     dailyCount = loadDailyCount();
                     updateUIForAuth();
-                    updateLimitBar();
-                    chatMessages.innerHTML = '<div class="message bot">✨ Добро пожаловать! Задайте вопрос по законам SA.</div>';
-                    messages = [];
                 }
             })
             .catch(() => updateUIForUnauth());
@@ -432,9 +860,6 @@
                 currentUser = JSON.parse(saved);
                 dailyCount = loadDailyCount();
                 updateUIForAuth();
-                updateLimitBar();
-                chatMessages.innerHTML = '<div class="message bot">✨ Продолжаем диалог. Задайте вопрос по законам SA.</div>';
-                messages = [];
             } else {
                 updateUIForUnauth();
                 updateLimitBar();
@@ -447,7 +872,7 @@
         function renderMessages() {
             if (messages.length === 0) {
                 chatMessages.innerHTML = currentUser ?
-                    '<div class="message bot">✨ Задайте вопрос по законам SA.</div>' :
+                    '<div class="message bot">⚖️ Задайте вопрос по законам, правам или адвокатуре.</div>' :
                     '<div class="message bot">🔐 Авторизуйтесь через Discord, чтобы начать диалог.</div>';
                 return;
             }
@@ -458,15 +883,23 @@
         }
 
         // ============================================================
-        // AI ЗАПРОС (ЧЕРЕЗ ПРОКСИ)
+        // AI ЗАПРОС
         // ============================================================
         async function askGroq(question) {
+            const badWords = ['ебанат', 'еблан', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'тупой', 'дебил', 'идиот', 'лох', 'мудак', 'уёбок', 'нахер', 'нахуй', 'херня', 'залупа'];
+            const lower = question.toLowerCase();
+            for (const word of badWords) {
+                if (lower.includes(word)) {
+                    return 'Извините, я помогаю только с юридическими вопросами. Пожалуйста, спросите о законах, правах или адвокатуре.';
+                }
+            }
+
             const history = messages.map(m => ({ role: m.role, content: m.content }));
 
             const payload = {
                 model: MODEL,
                 messages: [
-                    { role: 'system', content: `Ты юрист. Отвечай только на основе законов SA. Законы: ${LAWS}. На русском, кратко, по делу.` },
+                    { role: 'system', content: SYSTEM_PROMPT },
                     ...history,
                     { role: 'user', content: question }
                 ],
@@ -504,6 +937,15 @@
                 return;
             }
 
+            const userMessages = messages.filter(m => m.role === 'user').length;
+            if (userMessages >= MAX_MESSAGES_PER_CONV) {
+                const reply = '⚠️ В этом диалоге достигнут лимит в 15 вопросов. Создайте новый диалог, чтобы продолжить.';
+                messages.push({ role: 'assistant', content: reply });
+                renderMessages();
+                saveCurrentConversation(messages);
+                return;
+            }
+
             const question = questionInput.value.trim();
             if (!question) return;
             questionInput.value = '';
@@ -512,6 +954,7 @@
 
             messages.push({ role: 'user', content: question });
             renderMessages();
+            saveCurrentConversation(messages);
             incrementDailyCount();
             updateLimitBar();
 
@@ -524,6 +967,8 @@
                 const reply = await askGroq(question);
                 messages[thinkingIndex] = { role: 'assistant', content: reply };
                 renderMessages();
+                saveCurrentConversation(messages);
+                renderConvList();
             } catch (err) {
                 messages[thinkingIndex] = { role: 'assistant', content: `❌ Ошибка: ${err.message}` };
                 renderMessages();
@@ -539,12 +984,19 @@
         // ============================================================
         // ЗАПУСК
         // ============================================================
-        loginBtn.addEventListener('click', loginWithDiscord);
-        logoutBtn.addEventListener('click', logout);
+        // Кнопки
+        document.getElementById('loginBtn')?.addEventListener('click', loginWithDiscord);
+        sideLogoutBtn.addEventListener('click', logout);
+        headerLogoutBtn.addEventListener('click', logout);
+        sideNewChatBtn.addEventListener('click', createNewConversation);
         sendBtn.addEventListener('click', sendMessage);
         questionInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+
+        // Сторонние кнопки (если есть в header)
+        const loginBtnHeader = document.querySelector('#authButtons .btn');
+        if (loginBtnHeader) loginBtnHeader.addEventListener('click', loginWithDiscord);
 
         setInterval(() => {
             const newCount = loadDailyCount();
@@ -555,6 +1007,15 @@
         }, 60000);
 
         checkAuth();
+
+        // Инициализация сайдбара (закрыт на десктопе, открыт на мобиле?)
+        if (window.innerWidth > 768) {
+            isSidebarOpen = false;
+            sidebar.classList.add('closed');
+        } else {
+            isSidebarOpen = false;
+            sidebar.classList.add('open');
+        }
     </script>
 </body>
 </html>
